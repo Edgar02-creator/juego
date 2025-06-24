@@ -13,7 +13,7 @@
       padding: 20px;
     }
 
-    h1 {
+    h1, h2 {
       margin-bottom: 10px;
     }
 
@@ -36,12 +36,22 @@
       padding: 10px;
       width: 90%;
       font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
 
     #formulario button {
+      background-color: #007acc;
+      color: white;
+      border: none;
       padding: 10px 20px;
       font-size: 16px;
+      border-radius: 5px;
       cursor: pointer;
+    }
+
+    #formulario button:hover {
+      background-color: #005f99;
     }
 
     #score {
@@ -105,20 +115,35 @@
     .incorrect {
       border-color: red !important;
     }
+
+    #downloadIcon {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      font-size: 30px;
+      cursor: pointer;
+      z-index: 100;
+      filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.7));
+      color: #000;
+    }
+
+    #downloadIcon:hover {
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
   <div id="formulario">
-    <h2>Ingrese sus datos antes de jugar</h2>
-    <input type="text" id="nombre" placeholder="Nombre completo" />
-    <input type="email" id="correo" placeholder="Correo electrónico" />
+    <h2>📋 Ingrese sus datos para comenzar</h2>
+    <input type="text" id="nombre" placeholder="Nombres y apellidos" />
+    <input type="tel" id="telefono" placeholder="Número de teléfono" />
     <button onclick="iniciarJuego()">Iniciar juego</button>
   </div>
 
   <div id="juego" class="hidden">
     <h1>¿Qué objetos puedes llevar en cabina?</h1>
+    <div id="bienvenida" style="font-weight: bold; margin-bottom: 10px;"></div>
     <div id="score">Puntaje: 0 | 🏆 Récord: 0</div>
-
     <div id="items"></div>
 
     <div id="zones">
@@ -130,6 +155,8 @@
       </div>
     </div>
   </div>
+
+  <div id="downloadIcon" title="Descargar Registros">💾</div>
 
   <script>
     const objetos = [
@@ -146,21 +173,29 @@
 
     function iniciarJuego() {
       const nombre = document.getElementById("nombre").value.trim();
-      const correo = document.getElementById("correo").value.trim();
+      const telefono = document.getElementById("telefono").value.trim();
 
-      if (!nombre || !correo) {
-        alert("Por favor, ingresa tu nombre y correo.");
+      if (!nombre || !telefono) {
+        alert("Por favor, complete ambos campos.");
         return;
       }
 
-      // Puedes almacenar los datos si deseas:
       localStorage.setItem("jugador_nombre", nombre);
-      localStorage.setItem("jugador_correo", correo);
+      localStorage.setItem("jugador_telefono", telefono);
+      guardarRegistro(nombre, telefono);
 
       document.getElementById("formulario").classList.add("hidden");
       document.getElementById("juego").classList.remove("hidden");
+      document.getElementById("bienvenida").textContent = `👤 Jugador: ${nombre}`;
       crearItems();
       actualizarMarcador();
+    }
+
+    function guardarRegistro(nombre, telefono) {
+      const registros = JSON.parse(localStorage.getItem("registros_usuarios")) || [];
+      const timestamp = new Date().toLocaleString();
+      registros.push({ nombre, telefono, timestamp });
+      localStorage.setItem("registros_usuarios", JSON.stringify(registros));
     }
 
     function actualizarMarcador() {
@@ -241,13 +276,38 @@
           }
 
           alert(`¡Juego terminado! Puntaje final: ${puntaje}\n\n${mensajeFinal}`);
-
           puntaje = 0;
+          document.getElementById("juego").classList.add("hidden");
+          document.getElementById("formulario").classList.remove("hidden");
+          document.getElementById("nombre").value = "";
+          document.getElementById("telefono").value = "";
           actualizarMarcador();
-          crearItems();
         }, 400);
       }
     }
+
+    function descargarRegistros() {
+      const registros = JSON.parse(localStorage.getItem("registros_usuarios")) || [];
+      if (registros.length === 0) {
+        alert("No hay registros aún.");
+        return;
+      }
+
+      let csv = "Nombre,Teléfono,Fecha y hora\n";
+      registros.forEach(reg => {
+        csv += `"${reg.nombre}","${reg.telefono}","${reg.timestamp}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute("download", "registros_jugadores.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    document.getElementById("downloadIcon").addEventListener("click", descargarRegistros);
   </script>
 </body>
 </html>
