@@ -1,106 +1,102 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Juego de Cabina</title>
+  <meta charset="UTF-8">
+  <title>Juego - Registro de Datos</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #1f3c57;
+      color: #fff;
       text-align: center;
-      background: linear-gradient(to bottom, #d0f0fd, #87cefa);
-      margin: 0;
-      padding: 20px;
+      padding: 40px;
     }
 
-    #formulario, #juego {
-      background: white;
+    form {
+      background: #2c5364;
       padding: 20px;
       border-radius: 10px;
-      max-width: 400px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      display: inline-block;
     }
 
-    #formulario input {
+    label {
       display: block;
-      margin: 10px auto;
-      padding: 10px;
-      width: 90%;
-      font-size: 16px;
+      margin-top: 10px;
     }
 
-    #formulario button {
+    input {
+      padding: 8px;
+      width: 250px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    button {
+      margin-top: 20px;
       padding: 10px 20px;
-      font-size: 16px;
+      border: none;
+      background: #00b894;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
     }
 
-    .hidden {
-      display: none;
+    #mensaje {
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-  <div id="formulario">
-    <h2>Ingrese sus datos para comenzar</h2>
-    <input type="text" id="nombre" placeholder="Nombre completo" required />
-    <input type="tel" id="telefono" placeholder="Teléfono" required />
-    <button onclick="iniciarJuego()">Iniciar juego</button>
-  </div>
+  <h2>Ingrese sus datos para registrar el juego</h2>
 
-  <div id="juego" class="hidden">
-    <h1>Juego en proceso...</h1>
-    <p>Tu juego va aquí.</p>
-    <button onclick="terminarJuego()">Terminar juego</button>
-  </div>
+  <form id="registroForm">
+    <label for="nombre">Nombre completo:</label>
+    <input type="text" id="nombre" required>
+
+    <label for="telefono">Teléfono:</label>
+    <input type="tel" id="telefono" required>
+
+    <button type="submit">Terminar juego</button>
+  </form>
+
+  <div id="mensaje"></div>
 
   <script>
-    const URL_APPS_SCRIPT = "https://script.google.com/macros/s/AKfycbzGbRJZgPlOGlWvSkkqTDOE-FO7Xk7CXzVWPgNz6GuOm7rRXItfaOXc9zM0Wud_bXEF9Q/exec";
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzGbRJZgPlOGlWvSkkqTDOE-FO7Xk7CXzVWPgNz6GuOm7rRXItfaOXc9zM0Wud_bXEF9Q/exec";
 
-    function iniciarJuego() {
+    document.getElementById("registroForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
       const nombre = document.getElementById("nombre").value.trim();
       const telefono = document.getElementById("telefono").value.trim();
+      const fechaHora = new Date().toLocaleString("es-PE");
 
       if (!nombre || !telefono) {
-        alert("Por favor, completa todos los campos.");
+        alert("Por favor, complete todos los campos.");
         return;
       }
 
-      localStorage.setItem("nombre", nombre);
-      localStorage.setItem("telefono", telefono);
-
-      document.getElementById("formulario").classList.add("hidden");
-      document.getElementById("juego").classList.remove("hidden");
-    }
-
-    function terminarJuego() {
-      const nombre = localStorage.getItem("nombre");
-      const telefono = localStorage.getItem("telefono");
-      const fechaHora = new Date().toLocaleString();
-
-      fetch(URL_APPS_SCRIPT, {
+      fetch(scriptURL, {
         method: "POST",
         body: JSON.stringify({ nombre, telefono, fechaHora }),
         headers: {
           "Content-Type": "application/json",
-        }
+        },
       })
-      .then(res => res.text())
-      .then(respuesta => {
-        alert("🎉 Datos enviados correctamente.");
-        document.getElementById("formulario").reset();
-        document.getElementById("formulario").classList.remove("hidden");
-        document.getElementById("juego").classList.add("hidden");
-      })
-      .catch(error => {
-        alert("❌ Ocurrió un error al enviar los datos.");
-        console.error(error);
-      });
-    }
+        .then((res) => {
+          if (res.ok) {
+            document.getElementById("mensaje").innerText = "✅ Registro exitoso. ¡Gracias por jugar!";
+            document.getElementById("registroForm").reset();
+          } else {
+            throw new Error("Error al enviar los datos.");
+          }
+        })
+        .catch(() => {
+          document.getElementById("mensaje").innerText = "❌ Ocurrió un error al enviar los datos.";
+        });
+    });
   </script>
 </body>
 </html>
-
-
